@@ -13,6 +13,11 @@ import DailyJournal from './components/journal/DailyJournal';
 import HabitTracker from './components/habits/HabitTracker';
 import BreathingExercise from './components/wellness/BreathingExercise';
 import { storage, getAnonymousName, generateAnonymousId } from './utils/storage';
+import Reminders from './components/reminders/Reminders';
+import ThemeSwitcher from './components/theme/ThemeSwitcher';
+import Achievements from './components/achievements/Achievements';
+import SelfCarePlanner from './components/selfcare/SelfCarePlanner';
+import CommunityChallenges from './components/community/CommunityChallenges';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -109,6 +114,12 @@ export default function App() {
           {view === 'journal' && <DailyJournal />}
           {view === 'habits' && <HabitTracker />}
           {view === 'wellness' && <BreathingExercise />}
+          {view === 'reminders' && <Reminders />}
+          {view === 'theme' && <ThemeSwitcher />}
+          {view === 'achievements' && <Achievements />}
+          {view === 'selfcare' && <SelfCarePlanner />}
+          {view === 'challenges' && <CommunityChallenges />}
+
         </div>
 
         <div className="text-center text-xs text-stone-400 space-y-1 mt-6">

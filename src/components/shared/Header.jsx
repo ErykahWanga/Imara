@@ -1,5 +1,10 @@
 import React from 'react';
 import { 
+  Bell, 
+  Palette, 
+  Trophy, 
+  Heart, 
+  Target,
   Home, 
   Users, 
   User, 
@@ -8,6 +13,7 @@ import {
   BookOpen, 
   TrendingUp, 
   Wind 
+  
 } from 'lucide-react';
 import Logo from './Logo';
 
@@ -15,11 +21,16 @@ const Header = ({ user, currentView, onNavigate, onLogout }) => {
   const navItems = [
     { id: 'home', icon: Home, label: 'Home' },
     { id: 'feed', icon: Sparkles, label: 'Feed' },
+    { id: 'reminders', icon: Bell, label: 'Reminders' },
+    { id: 'selfcare', icon: Heart, label: 'Self-Care' },
+    { id: 'habits', icon: TrendingUp, label: 'Habits' },
     { id: 'mood', icon: Calendar, label: 'Mood' },
     { id: 'journal', icon: BookOpen, label: 'Journal' },
-    { id: 'habits', icon: TrendingUp, label: 'Habits' },
-    { id: 'wellness', icon: Wind, label: 'Wellness' },
+    { id: 'wellness', icon: Wind, label: 'Breathing' },
+    { id: 'challenges', icon: Target, label: 'Challenges' },
     { id: 'community', icon: Users, label: 'Community' },
+    { id: 'achievements', icon: Trophy, label: 'Achievements' },
+    { id: 'theme', icon: Palette, label: 'Theme' },
     { id: 'profile', icon: User, label: 'Profile' },
   ];
 
