@@ -8,7 +8,8 @@ import {
   TrendingUp, 
   Wind,
   Heart,
-  Home
+  Home,
+  Bell
 } from 'lucide-react';
 
 const QuickActions = ({ onNavigate }) => {
@@ -76,7 +77,42 @@ const QuickActions = ({ onNavigate }) => {
       icon: Heart,
       color: 'from-pink-500 to-pink-600',
       hoverColor: 'from-pink-600 to-pink-700'
-    }
+    },
+    {
+      id: 'reminders',
+      title: 'Reminders',
+      description: 'Gentle notifications for self-care',
+      icon: Bell,
+      color: 'from-amber-500 to-amber-600'
+    },
+    {
+      id: 'selfcare',
+      title: 'Self-Care Planner',
+      description: 'Schedule your wellness activities',
+      icon: Heart,
+      color: 'from-pink-500 to-pink-600'
+    },
+    {
+      id: 'challenges',
+      title: 'Challenges',
+      description: 'Community goals & accountability',
+      icon: Target,
+      color: 'from-blue-500 to-blue-600'
+    },
+    {
+      id: 'achievements',
+      title: 'Achievements',
+      description: 'Earn badges & track progress',
+      icon: Trophy,
+      color: 'from-purple-500 to-purple-600'
+    },
+    {
+      id: 'theme',
+      title: 'Theme',
+      description: 'Customize appearance',
+      icon: Palette,
+      color: 'from-gray-500 to-gray-600'
+    },
   ];
 
   return (
