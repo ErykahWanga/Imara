@@ -1,3 +1,50 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Theme Variables */
+.light-theme {
+    --bg-gradient-from: #fafaf9;
+    --bg-gradient-to: #fef3c7;
+    --card-bg: #ffffff;
+    --text-primary: #1c1917;
+    --text-secondary: #57534e;
+  }
+  
+  .dark-theme {
+    --bg-gradient-from: #1c1917;
+    --bg-gradient-to: #292524;
+    --card-bg: #292524;
+    --text-primary: #fafaf9;
+    --text-secondary: #a8a29e;
+  }
+  
+  .warm-theme {
+    --bg-gradient-from: #fef3c7;
+    --bg-gradient-to: #fde68a;
+    --card-bg: #ffffff;
+    --text-primary: #78350f;
+    --text-secondary: #92400e;
+  }
+  
+  .cool-theme {
+    --bg-gradient-from: #f0f9ff;
+    --bg-gradient-to: #e0f2fe;
+    --card-bg: #ffffff;
+    --text-primary: #0c4a6e;
+    --text-secondary: #0369a1;
+  }
+  
+  /* Apply theme to body */
+  body {
+    background: linear-gradient(135deg, var(--bg-gradient-from), var(--bg-gradient-to));
+    color: var(--text-primary);
+  }
+  
+  .bg-primary {
+    background-color: rgb(var(--primary-color));
+  }
+  
+  .bg-secondary {
+    background-color: rgb(var(--secondary-color));
+  }
