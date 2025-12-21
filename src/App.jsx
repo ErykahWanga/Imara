@@ -8,6 +8,10 @@ import PathDetail from './components/paths/PathDetail';
 import AnonymousCommunity from './components/community/AnonymousChat';
 import ProfileView from './components/profile/ProfileView';
 import InspirationFeed from './components/feed/InspirationFeed';
+import MoodCalendar from './components/mood/MoodCalendar';
+import DailyJournal from './components/journal/DailyJournal';
+import HabitTracker from './components/habits/HabitTracker';
+import BreathingExercise from './components/wellness/BreathingExercise';
 import { storage, getAnonymousName, generateAnonymousId } from './utils/storage';
 
 export default function App() {
@@ -99,6 +103,12 @@ export default function App() {
           {view === 'community' && <AnonymousCommunity />}
 
           {view === 'profile' && <ProfileView />}
+
+          {/* New Features */}
+          {view === 'mood' && <MoodCalendar />}
+          {view === 'journal' && <DailyJournal />}
+          {view === 'habits' && <HabitTracker />}
+          {view === 'wellness' && <BreathingExercise />}
         </div>
 
         <div className="text-center text-xs text-stone-400 space-y-1 mt-6">
