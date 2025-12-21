@@ -1,12 +1,33 @@
 import React from 'react';
-import { Home, Users, User, Sparkles } from 'lucide-react';
+import { 
+  Home, 
+  Users, 
+  User, 
+  Sparkles, 
+  Calendar, 
+  BookOpen, 
+  TrendingUp, 
+  Wind 
+} from 'lucide-react';
 import Logo from './Logo';
 
 const Header = ({ user, currentView, onNavigate, onLogout }) => {
+  const navItems = [
+    { id: 'home', icon: Home, label: 'Home' },
+    { id: 'feed', icon: Sparkles, label: 'Feed' },
+    { id: 'mood', icon: Calendar, label: 'Mood' },
+    { id: 'journal', icon: BookOpen, label: 'Journal' },
+    { id: 'habits', icon: TrendingUp, label: 'Habits' },
+    { id: 'wellness', icon: Wind, label: 'Wellness' },
+    { id: 'community', icon: Users, label: 'Community' },
+    { id: 'profile', icon: User, label: 'Profile' },
+  ];
+
   return (
-    <div className="bg-white border-b border-stone-200 sticky top-0 z-10">
+    <div className="bg-white border-b border-stone-200 sticky top-0 z-10 shadow-sm">
       <div className="max-w-6xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
+          {/* Logo */}
           <button
             onClick={() => onNavigate('home')}
             className="flex items-center gap-2"
@@ -15,49 +36,38 @@ const Header = ({ user, currentView, onNavigate, onLogout }) => {
             <p className="text-xs text-stone-500 hidden sm:block">Hello, {user.name}</p>
           </button>
 
+          {/* Navigation */}
           <div className="flex items-center gap-1">
-            <button
-              onClick={() => onNavigate('home')}
-              className={`p-2 rounded-lg transition-colors ${
-                currentView === 'home' ? 'bg-amber-100 text-amber-700' : 'text-stone-400 hover:text-stone-600'
-              }`}
-              title="Home"
-            >
-              <Home className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => onNavigate('feed')}
-              className={`p-2 rounded-lg transition-colors ${
-                currentView === 'feed' ? 'bg-amber-100 text-amber-700' : 'text-stone-400 hover:text-stone-600'
-              }`}
-              title="Inspiration Feed"
-            >
-              <Sparkles className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => onNavigate('community')}
-              className={`p-2 rounded-lg transition-colors ${
-                currentView === 'community' ? 'bg-amber-100 text-amber-700' : 'text-stone-400 hover:text-stone-600'
-              }`}
-              title="Community"
-            >
-              <Users className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => onNavigate('profile')}
-              className={`p-2 rounded-lg transition-colors ${
-                currentView === 'profile' ? 'bg-amber-100 text-amber-700' : 'text-stone-400 hover:text-stone-600'
-              }`}
-              title="Profile"
-            >
-              <User className="w-5 h-5" />
-            </button>
-            <button
-              onClick={onLogout}
-              className="ml-2 text-sm text-stone-500 hover:text-stone-700 transition-colors px-3 py-1.5"
-            >
-              Sign out
-            </button>
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onNavigate(item.id)}
+                  className={`p-2 rounded-lg transition-colors relative ${
+                    currentView === item.id 
+                      ? 'bg-amber-100 text-amber-700' 
+                      : 'text-stone-400 hover:text-stone-600 hover:bg-stone-50'
+                  }`}
+                  title={item.label}
+                >
+                  <Icon className="w-5 h-5" />
+                  {currentView === item.id && (
+                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-amber-500 rounded-full"></div>
+                  )}
+                </button>
+              );
+            })}
+            
+            {/* Logout */}
+            <div className="ml-2 pl-2 border-l border-stone-200">
+              <button
+                onClick={onLogout}
+                className="text-sm text-stone-500 hover:text-stone-700 transition-colors px-3 py-1.5"
+              >
+                Sign out
+              </button>
+            </div>
           </div>
         </div>
       </div>
