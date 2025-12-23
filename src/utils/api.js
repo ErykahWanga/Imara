@@ -1,338 +1,321 @@
-// API utility for IMARA backend integration
-const API_BASE_URL = 'http://localhost:5000/api';
+import { storage } from './storage';
 
-// Store JWT token in localStorage
-const getToken = () => localStorage.getItem('imara_token');
-const setToken = (token) => localStorage.setItem('imara_token', token);
-const removeToken = () => localStorage.removeItem('imara_token');
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Generic API request function
-const apiRequest = async (endpoint, options = {}) => {
-  const token = getToken();
-  const headers = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  };
-  
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
+class API {
+  constructor() {
+    this.baseURL = API_URL;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  async request(endpoint, options = {}) {
+    const token = storage.get('token');
+    
+    const headers = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
 
-  const data = await response.json();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
 
-  if (!response.ok) {
-    throw new Error(data.message || 'API Error');
+    const url = `${this.baseURL}${endpoint}`;
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers,
+      });
+
+      // Handle 401 Unauthorized (token expired)
+      if (response.status === 401) {
+        storage.remove('token');
+        storage.remove('imara_current_user');
+        window.location.href = '/';
+        throw new Error('Session expired. Please login again.');
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `API Error: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('API request failed:', error);
+      throw error;
+    }
   }
 
-  return data;
-};
-
-// Authentication API
-export const authAPI = {
-  register: async (userData) => {
-    const response = await apiRequest('/auth/register', {
+  // Auth endpoints
+  async register(userData) {
+    return this.request('/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
-    
-    if (response.token) {
-      setToken(response.token);
-    }
-    
-    return response;
-  },
-  
-  login: async (credentials) => {
-    const response = await apiRequest('/auth/login', {
+  }
+
+  async login(credentials) {
+    return this.request('/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
-    
-    if (response.token) {
-      setToken(response.token);
-    }
-    
-    return response;
-  },
-  
-  getCurrentUser: async () => {
-    return await apiRequest('/auth/me');
-  },
-  
-  updateProfile: async (userData) => {
-    return await apiRequest('/auth/updatedetails', {
-      method: 'PUT',
-      body: JSON.stringify(userData),
-    });
-  },
-  
-  updatePassword: async (passwordData) => {
-    return await apiRequest('/auth/updatepassword', {
-      method: 'PUT',
-      body: JSON.stringify(passwordData),
-    });
-  },
-  
-  logout: () => {
-    removeToken();
   }
-};
 
-// Daily Check-ins API
-export const checkinAPI = {
-  create: async (checkinData) => {
-    return await apiRequest('/checkins', {
-      method: 'POST',
-      body: JSON.stringify(checkinData),
-    });
-  },
-  
-  getAll: async () => {
-    return await apiRequest('/checkins');
-  },
-  
-  getStats: async () => {
-    return await apiRequest('/checkins/stats');
-  },
-  
-  update: async (id, checkinData) => {
-    return await apiRequest(`/checkins/${id}`, {
+  async getCurrentUser() {
+    return this.request('/auth/me');
+  }
+
+  async updateProfile(profileData) {
+    return this.request('/auth/profile', {
       method: 'PUT',
-      body: JSON.stringify(checkinData),
+      body: JSON.stringify(profileData),
     });
-  },
-  
-  delete: async (id) => {
-    return await apiRequest(`/checkins/${id}`, {
+  }
+
+  async updateSettings(settings) {
+    return this.request('/auth/settings', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    });
+  }
+
+  // Check-in endpoints
+  async createCheckIn(data) {
+    return this.request('/checkins', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getTodayCheckIn() {
+    return this.request('/checkins/today');
+  }
+
+  async getCheckIns(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/checkins${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getCheckInStats() {
+    return this.request('/checkins/stats');
+  }
+
+  async getCheckInCalendar(year, month) {
+    return this.request(`/checkins/calendar?year=${year}&month=${month}`);
+  }
+
+  // Journal endpoints
+  async createJournalEntry(data) {
+    return this.request('/journal', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getJournalEntries(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/journal${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getJournalEntry(id) {
+    return this.request(`/journal/${id}`);
+  }
+
+  async updateJournalEntry(id, data) {
+    return this.request(`/journal/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteJournalEntry(id) {
+    return this.request(`/journal/${id}`, {
       method: 'DELETE',
     });
   }
-};
 
-// Journal API
-export const journalAPI = {
-  create: async (journalData) => {
-    return await apiRequest('/journal', {
+  async getJournalStats() {
+    return this.request('/journal/stats');
+  }
+
+  async getJournalPrompts() {
+    return this.request('/journal/prompts');
+  }
+
+  // Habit endpoints
+  async createHabit(data) {
+    return this.request('/habits', {
       method: 'POST',
-      body: JSON.stringify(journalData),
+      body: JSON.stringify(data),
     });
-  },
-  
-  getAll: async () => {
-    return await apiRequest('/journal');
-  },
-  
-  getStats: async () => {
-    return await apiRequest('/journal/stats');
-  },
-  
-  update: async (id, journalData) => {
-    return await apiRequest(`/journal/${id}`, {
+  }
+
+  async getHabits() {
+    return this.request('/habits');
+  }
+
+  async getHabit(id) {
+    return this.request(`/habits/${id}`);
+  }
+
+  async updateHabit(id, data) {
+    return this.request(`/habits/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(journalData),
+      body: JSON.stringify(data),
     });
-  },
-  
-  delete: async (id) => {
-    return await apiRequest(`/journal/${id}`, {
+  }
+
+  async deleteHabit(id) {
+    return this.request(`/habits/${id}`, {
       method: 'DELETE',
     });
   }
-};
 
-// Habits API
-export const habitsAPI = {
-  create: async (habitData) => {
-    return await apiRequest('/habits', {
+  async toggleHabitCompletion(id, date) {
+    return this.request(`/habits/${id}/complete`, {
       method: 'POST',
-      body: JSON.stringify(habitData),
+      body: JSON.stringify({ date }),
     });
-  },
-  
-  getAll: async () => {
-    return await apiRequest('/habits');
-  },
-  
-  getStats: async () => {
-    return await apiRequest('/habits/stats');
-  },
-  
-  complete: async (id) => {
-    return await apiRequest(`/habits/${id}/complete`, {
+  }
+
+  async getHabitStats() {
+    return this.request('/habits/stats');
+  }
+
+  // Mood endpoints
+  async createMoodEntry(data) {
+    return this.request('/mood', {
       method: 'POST',
+      body: JSON.stringify(data),
     });
-  },
-  
-  update: async (id, habitData) => {
-    return await apiRequest(`/habits/${id}`, {
+  }
+
+  async getMoodEntries(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/mood${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getMoodStats() {
+    return this.request('/mood/stats');
+  }
+
+  // Achievement endpoints
+  async getAchievements() {
+    return this.request('/achievements');
+  }
+
+  async getUserAchievements() {
+    return this.request('/achievements/user');
+  }
+
+  // Self-care endpoints
+  async createSelfCareActivity(data) {
+    return this.request('/selfcare', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getSelfCareActivities() {
+    return this.request('/selfcare');
+  }
+
+  async updateSelfCareActivity(id, data) {
+    return this.request(`/selfcare/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(habitData),
+      body: JSON.stringify(data),
     });
-  },
-  
-  delete: async (id) => {
-    return await apiRequest(`/habits/${id}`, {
+  }
+
+  async toggleSelfCareCompletion(id, date, completed) {
+    return this.request(`/selfcare/${id}/complete`, {
+      method: 'POST',
+      body: JSON.stringify({ date, completed }),
+    });
+  }
+
+  // Challenge endpoints
+  async getChallenges() {
+    return this.request('/challenges');
+  }
+
+  async joinChallenge(challengeId) {
+    return this.request(`/challenges/${challengeId}/join`, {
+      method: 'POST',
+    });
+  }
+
+  async getChallengeProgress(challengeId) {
+    return this.request(`/challenges/${challengeId}/progress`);
+  }
+
+  // Reminder endpoints
+  async createReminder(data) {
+    return this.request('/reminders', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getReminders() {
+    return this.request('/reminders');
+  }
+
+  async updateReminder(id, data) {
+    return this.request(`/reminders/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteReminder(id) {
+    return this.request(`/reminders/${id}`, {
       method: 'DELETE',
     });
   }
-};
 
-// Achievements API
-export const achievementsAPI = {
-  getAll: async () => {
-    return await apiRequest('/achievements');
-  },
-  
-  getUserAchievements: async () => {
-    return await apiRequest('/achievements/user');
-  },
-  
-  unlock: async (achievementId) => {
-    return await apiRequest(`/achievements/${achievementId}/unlock`, {
-      method: 'POST',
-    });
+  // Theme endpoints
+  async getTheme() {
+    return this.request('/theme');
   }
-};
 
-// Community API
-export const communityAPI = {
-  getPosts: async () => {
-    return await apiRequest('/community/posts');
-  },
-  
-  createPost: async (postData) => {
-    return await apiRequest('/community/posts', {
-      method: 'POST',
-      body: JSON.stringify(postData),
-    });
-  },
-  
-  replyToPost: async (postId, replyData) => {
-    return await apiRequest(`/community/posts/${postId}/replies`, {
-      method: 'POST',
-      body: JSON.stringify(replyData),
-    });
-  },
-  
-  likePost: async (postId) => {
-    return await apiRequest(`/community/posts/${postId}/like`, {
-      method: 'POST',
-    });
-  }
-};
-
-// Challenges API
-export const challengesAPI = {
-  getAll: async () => {
-    return await apiRequest('/challenges');
-  },
-  
-  getUserChallenges: async () => {
-    return await apiRequest('/challenges/user');
-  },
-  
-  join: async (challengeId) => {
-    return await apiRequest(`/challenges/${challengeId}/join`, {
-      method: 'POST',
-    });
-  },
-  
-  leave: async (challengeId) => {
-    return await apiRequest(`/challenges/${challengeId}/leave`, {
-      method: 'POST',
-    });
-  },
-  
-  updateProgress: async (challengeId, progressData) => {
-    return await apiRequest(`/challenges/${challengeId}/progress`, {
+  async updateTheme(data) {
+    return this.request('/theme', {
       method: 'PUT',
-      body: JSON.stringify(progressData),
+      body: JSON.stringify(data),
     });
   }
-};
 
-// Reminders API
-export const remindersAPI = {
-  create: async (reminderData) => {
-    return await apiRequest('/reminders', {
+  // Community endpoints
+  async createCommunityPost(data) {
+    return this.request('/community/posts', {
       method: 'POST',
-      body: JSON.stringify(reminderData),
-    });
-  },
-  
-  getAll: async () => {
-    return await apiRequest('/reminders');
-  },
-  
-  update: async (id, reminderData) => {
-    return await apiRequest(`/reminders/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(reminderData),
-    });
-  },
-  
-  delete: async (id) => {
-    return await apiRequest(`/reminders/${id}`, {
-      method: 'DELETE',
+      body: JSON.stringify(data),
     });
   }
-};
 
-// Theme API
-export const themeAPI = {
-  save: async (themeData) => {
-    return await apiRequest('/themes', {
+  async getCommunityPosts(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/community/posts${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async likePost(postId) {
+    return this.request(`/community/posts/${postId}/like`, {
       method: 'POST',
-      body: JSON.stringify(themeData),
     });
-  },
-  
-  get: async () => {
-    return await apiRequest('/themes');
   }
-};
 
-// Self-Care API
-export const selfcareAPI = {
-  createActivity: async (activityData) => {
-    return await apiRequest('/selfcare/activities', {
+  async createPostReply(postId, data) {
+    return this.request(`/community/posts/${postId}/replies`, {
       method: 'POST',
-      body: JSON.stringify(activityData),
-    });
-  },
-  
-  getActivities: async () => {
-    return await apiRequest('/selfcare/activities');
-  },
-  
-  updateActivity: async (id, activityData) => {
-    return await apiRequest(`/selfcare/activities/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(activityData),
-    });
-  },
-  
-  deleteActivity: async (id) => {
-    return await apiRequest(`/selfcare/activities/${id}`, {
-      method: 'DELETE',
+      body: JSON.stringify(data),
     });
   }
-};
 
-export default {
-  authAPI,
-  checkinAPI,
-  journalAPI,
-  habitsAPI,
-  achievementsAPI,
-  communityAPI,
-  challengesAPI,
-  remindersAPI,
-  themeAPI,
-  selfcareAPI
-};
+  async getPostReplies(postId) {
+    return this.request(`/community/posts/${postId}/replies`);
+  }
+}
+
+export const api = new API();

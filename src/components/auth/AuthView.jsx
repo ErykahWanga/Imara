@@ -1,59 +1,41 @@
 import React, { useState } from 'react';
-import { storage } from '../../utils/storage';
+import { useAuth } from '../../context/AuthContext';
 
-const AuthView = ({ onLogin }) => {
+const AuthView = () => {
+  const { login, register } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setError('');
-
+    
     if (!email || !password) {
       setError('Please fill in all fields');
       return;
     }
 
-    if (isLogin) {
-      const users = storage.get('imara_users') || {};
-      const user = users[email];
-      
-      if (user && user.password === password) {
-        storage.set('imara_current_user', { 
-          email, 
-          name: user.name,
-          userId: user.userId,
-          createdAt: user.createdAt 
-        });
-        onLogin({ email, name: user.name, userId: user.userId });
+    if (!isLogin && (!name || !username)) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        await login(email, password);
       } else {
-        setError('Invalid email or password');
+        await register({ email, username, name, password });
       }
-    } else {
-      if (!name) {
-        setError('Please enter your name');
-        return;
-      }
-      
-      const users = storage.get('imara_users') || {};
-      
-      if (users[email]) {
-        setError('This email is already registered');
-        return;
-      }
-      
-      const userId = 'user_' + Math.random().toString(36).substr(2, 9);
-      users[email] = { 
-        password, 
-        name, 
-        userId,
-        createdAt: new Date().toISOString() 
-      };
-      storage.set('imara_users', users);
-      storage.set('imara_current_user', { email, name, userId, createdAt: new Date().toISOString() });
-      onLogin({ email, name, userId });
+    } catch (err) {
+      setError(err || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -74,22 +56,35 @@ const AuthView = ({ onLogin }) => {
               <p className="text-xs text-amber-800">Your data stays private and secure</p>
             </div>
           </div>
-
           <div className="space-y-4">
             {!isLogin && (
-              <div>
-                <label className="block text-sm text-stone-600 mb-2">Your name</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:border-amber-300 transition-colors"
-                  placeholder="What should we call you?"
-                />
-              </div>
+              <>
+                <div>
+                  <label className="block text-sm text-stone-600 mb-2">Your name</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:border-amber-300 transition-colors"
+                    placeholder="What should we call you?"
+                    disabled={loading}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-stone-600 mb-2">Username</label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:border-amber-300 transition-colors"
+                    placeholder="Choose a username"
+                    disabled={loading}
+                  />
+                </div>
+              </>
             )}
-
             <div>
               <label className="block text-sm text-stone-600 mb-2">Email</label>
               <input
@@ -99,9 +94,9 @@ const AuthView = ({ onLogin }) => {
                 onKeyPress={handleKeyPress}
                 className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:border-amber-300 transition-colors"
                 placeholder="your@email.com"
+                disabled={loading}
               />
             </div>
-
             <div>
               <label className="block text-sm text-stone-600 mb-2">Password</label>
               <input
@@ -111,29 +106,29 @@ const AuthView = ({ onLogin }) => {
                 onKeyPress={handleKeyPress}
                 className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:border-amber-300 transition-colors"
                 placeholder="••••••••"
+                disabled={loading}
               />
             </div>
-
             {error && (
               <div className="text-sm text-red-500 bg-red-50 px-4 py-2 rounded-lg">
                 {error}
               </div>
             )}
-
             <button
               onClick={handleSubmit}
-              className="w-full bg-stone-800 text-white py-3 rounded-xl hover:bg-stone-700 transition-colors"
+              disabled={loading}
+              className="w-full bg-stone-800 text-white py-3 rounded-xl hover:bg-stone-700 transition-colors disabled:bg-stone-300 disabled:cursor-not-allowed"
             >
-              {isLogin ? 'Sign in' : 'Create account'}
+              {loading ? 'Please wait...' : (isLogin ? 'Sign in' : 'Create account')}
             </button>
           </div>
-
           <button
             onClick={() => {
               setIsLogin(!isLogin);
               setError('');
             }}
-            className="w-full text-sm text-stone-500 hover:text-stone-700 transition-colors"
+            disabled={loading}
+            className="w-full text-sm text-stone-500 hover:text-stone-700 transition-colors disabled:text-stone-300"
           >
             {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
           </button>
